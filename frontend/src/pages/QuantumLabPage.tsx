@@ -12,6 +12,7 @@ import { CircuitCanvas } from '../components/quantum/CircuitCanvas';
 import { SimulationControls } from '../components/quantum/SimulationControls';
 import { CodeEditorView } from '../components/quantum/CodeEditorView';
 import { SimulationResults } from '../components/quantum/SimulationResults';
+import { CircuitAnalysisPanel } from '../components/quantum/CircuitAnalysisPanel';
 import { GuidedLabTutorial } from '../components/quantum/GuidedLabTutorial';
 import { BeginnerExplainerBar } from '../components/quantum/BeginnerExplainerBar';
 import { FloatingTutorDrawer } from '../components/tutor/FloatingTutorDrawer';
@@ -342,6 +343,14 @@ export const QuantumLabPage: React.FC<QuantumLabPageProps> = ({
           </div>
         </div>
       )}
+
+      {/* Circuit Analysis & Depth Optimization Panel */}
+      <div className="pt-4">
+        <CircuitAnalysisPanel
+          circuit={circuit}
+          onUpdateCircuit={handleUpdateCircuit}
+        />
+      </div>
 
       {/* Results Section - Full Width Experiment Report */}
       <div className="pt-2">
