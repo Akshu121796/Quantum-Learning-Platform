@@ -503,9 +503,9 @@ export const tutorApi = {
       } else if (hasCX || (hasH && hasCX)) {
         targetModuleId = 'mod-05';
         rationale = 'Your active circuit uses multi-qubit entangling gates (CX) to synthesize correlated states. Module 05 explores Einstein-Podolsky-Rosen (EPR) pairs, Bell inequality violations, and quantum teleportation protocols.';
-      } else if (gates.length >= 3 && circuit.numQubits >= 2) {
+      } else if (hasSWAP || (gates.length >= 3 && circuit.numQubits >= 2)) {
         targetModuleId = 'mod-06';
-        rationale = `Your circuit is expanding into a multi-qubit composite system (${circuit.numQubits} qubits, ${gates.length} gates). Module 06 covers multi-qubit register manipulation, matrix tensor products (A ⊗ B), and reversible circuit synthesis.`;
+        rationale = `Your circuit is expanding into a multi-qubit composite system (${circuit.numQubits} qubits, ${gates.length} gates${hasSWAP ? ' with state-exchanging SWAP gates' : ''}). Module 06 covers multi-qubit register manipulation, matrix tensor products (A ⊗ B), and reversible circuit synthesis.`;
       } else if (hasS || hasT || hasZ || hasY) {
         targetModuleId = 'mod-04';
         rationale = 'You are experimenting with relative phase gates (S, T, Z, or Y). Module 04 details the algebraic properties of Pauli operators, Hermitian matrices, and non-Clifford phase rotations on the Bloch sphere.';

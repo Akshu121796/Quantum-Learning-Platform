@@ -306,6 +306,7 @@ export const QuantumLabPage: React.FC<QuantumLabPageProps> = ({
               onLoadPreset={handleLoadPreset}
               highlightCell={highlightCell}
               highlightQubits={highlightQubits}
+              onSelectGate={setSelectedGate}
             />
           </div>
 
@@ -358,6 +359,7 @@ export const QuantumLabPage: React.FC<QuantumLabPageProps> = ({
         simulationResult={simulationResult}
         config={config}
         activeGate={selectedGate}
+        onNavigate={onNavigate}
       />
     </div>
   );

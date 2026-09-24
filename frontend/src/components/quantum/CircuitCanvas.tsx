@@ -9,6 +9,7 @@ interface CircuitCanvasProps {
   onLoadPreset: (presetKey: string) => void;
   highlightCell?: { qubit: number; step: number } | null;
   highlightQubits?: boolean;
+  onSelectGate?: (gate: GateType) => void;
 }
 
 export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
@@ -18,6 +19,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   onLoadPreset,
   highlightCell,
   highlightQubits,
+  onSelectGate,
 }) => {
   const stepsCount = Math.max(6, circuit.steps);
   const [dragOverCell, setDragOverCell] = useState<{ qubit: number; step: number } | null>(null);
@@ -60,6 +62,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       ...circuit,
       gates: [...cleanGates, newGate],
     });
+    onSelectGate?.(gateType);
   };
 
   const handleMoveGate = (
@@ -476,6 +479,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
                             const gateObj = directGate || targetGate;
                             if (!gateObj) return;
                             setDraggingGateId(gateObj.id);
+                            onSelectGate?.(gateObj.type);
                             e.dataTransfer.setData(
                               'text/plain',
                               JSON.stringify({

@@ -145,6 +145,7 @@ export const App: React.FC = () => {
             circuit={activeLabCircuit}
             onCircuitChange={setActiveLabCircuit}
             onSimulationComplete={handleSimulationComplete}
+            onNavigate={handleNavigate}
           />
         )}
 
