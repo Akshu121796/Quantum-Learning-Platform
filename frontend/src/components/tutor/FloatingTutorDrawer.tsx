@@ -19,6 +19,7 @@ interface FloatingTutorDrawerProps {
   simulationResult: SimulationResult | null;
   config?: SimulationConfig;
   activeGate?: GateType | null;
+  onNavigate?: (tab: 'dashboard' | 'learn' | 'lab' | 'challenges' | 'progress', targetModuleId?: string) => void;
 }
 
 export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
@@ -26,6 +27,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
   simulationResult,
   config,
   activeGate,
+  onNavigate,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasNewContextTip, setHasNewContextTip] = useState(false);
@@ -34,7 +36,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
     {
       id: 'welcome-init',
       sender: 'tutor',
-      text: "Hello! I'm your Quantum AI Tutor. I'm connected to your live lab workspace. Ask me any question, or tap an action below to analyze your circuit, inspect measurement distributions, or diagnose potential state conflicts.",
+      text: "Hello! I'm your Quantum AI Tutor, synchronized with your live lab workspace. Tap any action above to explain your active circuit, analyze the selected gate, interpret simulation results, diagnose circuit mistakes, generate multi-framework code, or receive lesson recommendations.",
       timestamp: 'Ready',
       category: 'general',
     },
@@ -43,7 +45,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
   const [isThinking, setIsThinking] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // When simulation completes or circuit changes, subtle indicator
+  // When simulation completes or circuit changes, trigger indicator
   useEffect(() => {
     if (simulationResult) {
       setHasNewContextTip(true);
@@ -68,14 +70,37 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
   }, [isOpen]);
 
   const handleRunAction = async (actionType: TutorActionType, customQuery?: string) => {
-    const queryText = customQuery || (
-      actionType === 'explain_circuit' ? 'Explain this circuit' :
-      actionType === 'explain_gate' ? `Explain the ${activeGate || 'selected'} gate` :
-      actionType === 'explain_result' ? 'Why do these measurement results occur?' :
-      actionType === 'find_mistakes' ? 'Diagnose potential issues in this circuit' :
-      actionType === 'optimize_circuit' ? 'How can I optimize this circuit?' :
-      'Give me a beginner hint'
-    );
+    let queryText = customQuery;
+    if (!queryText) {
+      switch (actionType) {
+        case 'explain_circuit':
+          queryText = 'Explain this circuit';
+          break;
+        case 'explain_gate':
+          queryText = activeGate ? `Explain the ${activeGate} gate in this circuit` : 'Explain the selected gate';
+          break;
+        case 'explain_result':
+          queryText = 'Explain the simulation results';
+          break;
+        case 'find_mistakes':
+          queryText = 'Find possible mistakes in this circuit';
+          break;
+        case 'generate_code':
+          queryText = 'Generate Qiskit/PennyLane/Cirq code';
+          break;
+        case 'recommend_lesson':
+          queryText = 'Recommend the next lesson for my circuit';
+          break;
+        case 'optimize_circuit':
+          queryText = 'How can I optimize this circuit?';
+          break;
+        case 'give_hint':
+          queryText = 'Give me a hint';
+          break;
+        default:
+          queryText = 'Explain this circuit';
+      }
+    }
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -104,6 +129,8 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
         sender: 'tutor',
         text: response.text,
         latexNotation: response.latexNotation,
+        codeSnippet: response.codeSnippet,
+        recommendation: response.recommendation,
         category: response.category,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -111,6 +138,14 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
       setMessages((prev) => [...prev, tutorMsg]);
     } catch (err) {
       console.error(err);
+      const errorMsg: ChatMessage = {
+        id: `tutor-err-${Date.now()}`,
+        sender: 'tutor',
+        text: 'An error occurred while analyzing the circuit state. Please try again.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        category: 'diagnostic',
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsThinking(false);
     }
@@ -129,7 +164,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
       {
         id: `welcome-${Date.now()}`,
         sender: 'tutor',
-        text: 'Conversation reset. Ready for your next quantum inquiry or circuit inspection.',
+        text: 'Conversation reset. Connected to your live circuit workspace. Select an action above or type any quantum question.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         category: 'general',
       },
@@ -184,7 +219,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
 
       {/* Right-Side Animated Drawer */}
       <div
-        className={`fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-white shadow-2xl border-l border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] bg-white shadow-2xl border-l border-slate-200 flex flex-col transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"
@@ -202,7 +237,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
                 <h2 className="text-sm font-bold text-slate-900">Quantum Tutor</h2>
                 <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Context
+                  Live Circuit Context
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">Real-time quantum circuit & simulation assistant</p>
@@ -236,8 +271,8 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
           activeGate={activeGate}
         />
 
-        {/* Compact Purposeful Action Suggestions */}
-        <div className="px-3 pt-2 pb-1 border-b border-slate-100 bg-white">
+        {/* 6 Core Contextual Action Buttons */}
+        <div className="px-3 py-2 border-b border-slate-100 bg-white">
           <TutorSuggestions
             onSelectAction={(act) => handleRunAction(act)}
             isLoading={isThinking}
@@ -249,7 +284,14 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
         {/* Chat Message Stream */}
         <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/40">
           {messages.map((msg) => (
-            <TutorMessage key={msg.id} message={msg} />
+            <TutorMessage 
+              key={msg.id} 
+              message={msg} 
+              onNavigateToModule={(modId) => {
+                setIsOpen(false);
+                onNavigate?.('learn', modId);
+              }}
+            />
           ))}
 
           {isThinking && (
@@ -257,7 +299,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
               <div className="bg-white border border-slate-200 rounded-lg p-3 text-xs flex items-center gap-2.5 shadow-2xs">
                 <Loader2 className="w-4 h-4 text-indigo-600 animate-spin flex-shrink-0" />
                 <span className="text-[11px] font-mono text-slate-600">
-                  Calculating statevector & quantum unitary transformations...
+                  Analyzing circuit state vector & quantum operators...
                 </span>
               </div>
             </div>
@@ -275,7 +317,7 @@ export const FloatingTutorDrawer: React.FC<FloatingTutorDrawerProps> = ({
             type="text"
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
-            placeholder="Ask quantum tutor (e.g., 'What happens if I add a Z gate?')..."
+            placeholder="Ask anything about your circuit, gates, or results..."
             className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 focus:bg-white transition-all"
           />
           <button

@@ -30,6 +30,7 @@ interface QuantumLabPageProps {
   circuit?: Circuit;
   onCircuitChange?: (circuit: Circuit) => void;
   onSimulationComplete?: (result: SimulationResult) => void;
+  onNavigate?: (tab: 'dashboard' | 'learn' | 'lab' | 'challenges' | 'progress', targetModuleId?: string) => void;
 }
 
 export const QuantumLabPage: React.FC<QuantumLabPageProps> = ({
@@ -37,6 +38,7 @@ export const QuantumLabPage: React.FC<QuantumLabPageProps> = ({
   circuit: controlledCircuit,
   onCircuitChange,
   onSimulationComplete,
+  onNavigate,
 }) => {
   const [internalCircuit, setInternalCircuit] = useState<Circuit>(
     controlledCircuit || initialCircuit || PRESET_CIRCUITS.bellState
