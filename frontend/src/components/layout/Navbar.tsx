@@ -1,4 +1,5 @@
 import React from 'react';
+import type { User } from '../../types/auth';
 import { 
   Atom, 
   LayoutDashboard, 
@@ -7,7 +8,7 @@ import {
   Trophy, 
   BarChart3, 
   Sparkles,
-  ChevronDown
+  LogOut
 } from 'lucide-react';
 
 export type TabType = 'dashboard' | 'learn' | 'lab' | 'challenges' | 'progress';
@@ -17,6 +18,8 @@ interface NavbarProps {
   onTabChange: (tab: TabType) => void;
   xpPoints?: number;
   streakDays?: number;
+  user?: User | null;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,6 +27,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onTabChange,
   xpPoints = 1420,
   streakDays = 4,
+  user,
+  onLogout,
 }) => {
   const navItems = [
     { id: 'dashboard' as TabType, label: 'Dashboard', icon: LayoutDashboard },
@@ -32,6 +37,19 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'challenges' as TabType, label: 'Challenges', icon: Trophy },
     { id: 'progress' as TabType, label: 'Progress', icon: BarChart3 },
   ];
+
+  const initials = user?.name
+    ? user.name
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase()
+    : 'AV';
+
+  const nameDisplay = user?.name || 'Alex Vance';
+  const roleDisplay = user?.role === 'instructor' ? 'Faculty Instructor' : 'Student Researcher';
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200/90 text-slate-800">
@@ -44,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-2.5 text-left group focus:outline-none cursor-pointer"
             >
               <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-xs group-hover:bg-slate-800 transition-colors">
-                <Atom className="w-5 h-5 animate-pulse" />
+                <Atom className="w-5 h-5 animate-pulse text-cyan-400" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -102,13 +120,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* User Profile */}
             <div className="flex items-center gap-2 pl-1">
               <div className="w-8 h-8 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-xs font-semibold text-slate-700">
-                AV
+                {initials}
               </div>
               <div className="hidden xl:block text-left text-xs">
-                <p className="font-medium text-slate-800 leading-tight">Alex Vance</p>
-                <p className="text-[10px] text-slate-500">Student Researcher</p>
+                <p className="font-medium text-slate-800 leading-tight">{nameDisplay}</p>
+                <p className="text-[10px] text-slate-500">{roleDisplay}</p>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden xl:block" />
+
+              {onLogout && (
+                <button
+                  type="button"
+                  id="student-logout-btn"
+                  onClick={onLogout}
+                  className="ml-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium shadow-xs transition-colors cursor-pointer"
+                  title="Sign out of QuantumLearn"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

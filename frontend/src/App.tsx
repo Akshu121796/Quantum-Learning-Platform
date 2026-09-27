@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { TabType } from './components/layout/Navbar';
 import { Navbar } from './components/layout/Navbar';
 import { DashboardPage } from './pages/DashboardPage';
@@ -6,6 +6,10 @@ import { LearnPage } from './pages/LearnPage';
 import { QuantumLabPage } from './pages/QuantumLabPage';
 import { ChallengesPage } from './pages/ChallengesPage';
 import { ProgressPage } from './pages/ProgressPage';
+import { LoginPage } from './pages/LoginPage';
+import { InstructorPage } from './pages/InstructorPage';
+import { getCurrentUser, setCurrentUser, removeCurrentUser } from './services/authService';
+import type { User } from './types/auth';
 import { 
   LESSON_MODULES, 
   INITIAL_USER_PROGRESS, 
@@ -15,11 +19,63 @@ import type { Circuit, LessonModule, SimulationResult, Challenge } from './types
 import { Atom, Shield } from 'lucide-react';
 
 export const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(() => getCurrentUser());
+  const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname);
+
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [modules, setModules] = useState<LessonModule[]>(LESSON_MODULES);
   const [userProgress, setUserProgress] = useState(INITIAL_USER_PROGRESS);
   const [activeLabCircuit, setActiveLabCircuit] = useState<Circuit>(PRESET_CIRCUITS.bellState);
   const [selectedLearnModuleId, setSelectedLearnModuleId] = useState<string | null>(null);
+
+  // Sync state with browser navigation events (back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (path: string) => {
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path);
+    }
+    setCurrentPath(path);
+  };
+
+  const handleLoginSuccess = (loggedInUser: User) => {
+    setCurrentUser(loggedInUser);
+    setUser(loggedInUser);
+    if (loggedInUser.role === 'instructor') {
+      navigateTo('/instructor');
+    } else {
+      navigateTo('/');
+    }
+  };
+
+  const handleLogout = () => {
+    removeCurrentUser();
+    setUser(null);
+    navigateTo('/login');
+  };
+
+  // Route protection logic
+  useEffect(() => {
+    if (!user) {
+      if (currentPath !== '/login') {
+        navigateTo('/login');
+      }
+    } else if (user.role === 'instructor') {
+      if (currentPath !== '/instructor') {
+        navigateTo('/instructor');
+      }
+    } else if (user.role === 'student') {
+      if (currentPath === '/login' || currentPath === '/instructor') {
+        navigateTo('/');
+      }
+    }
+  }, [user, currentPath]);
 
   const handleNavigate = (tab: TabType, targetModuleId?: string) => {
     if (targetModuleId) {
@@ -106,6 +162,17 @@ export const App: React.FC = () => {
     }));
   };
 
+  // Render Login view if user is not authenticated or path is /login
+  if (!user || currentPath === '/login') {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // Render Instructor Shell if authenticated user is an instructor
+  if (user.role === 'instructor' || currentPath === '/instructor') {
+    return <InstructorPage user={user} onLogout={handleLogout} />;
+  }
+
+  // Render Student Application Dashboard & Tabs
   return (
     <div className="min-h-screen flex flex-col bg-[#fcfcfd] text-slate-800 antialiased selection:bg-slate-200">
       {/* Navigation Header */}
@@ -118,6 +185,8 @@ export const App: React.FC = () => {
         }}
         xpPoints={1420 + (userProgress.challengesSolved - 2) * 100}
         streakDays={userProgress.streakDays}
+        user={user}
+        onLogout={handleLogout}
       />
 
       {/* Main Page Content */}
